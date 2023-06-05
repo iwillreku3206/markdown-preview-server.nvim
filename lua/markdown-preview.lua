@@ -1,6 +1,7 @@
 local json = require "markdown-preview.lib.json"
 
 local PREVIEW_AUTOCMD = -1
+local PREVIEW_FILEOPEN_AUTOCMD = -1
 local SERVER_PID = -1
 
 local function setup(opts)
@@ -53,14 +54,42 @@ local function setup(opts)
             "-s",
             "--json",
             request_body,
-            "http://localhost:8080/document"
+            "http://127.0.0.1:8080/document"
+          }, {
+            on_stderr = function(_, data)
+              print("E: " .. json.encode(data))
+            end
           })
       end,
       pattern = ft_patterns
     })
+    PREVIEW_FILEOPEN_AUTOCMD = vim.api.nvim_create_autocmd({ "BufFilePost", "BufEnter" }, {
+      callback = function()
+        local current_buf = vim.api.nvim_get_current_buf()
+        local filename = vim.api.nvim_buf_get_name(current_buf)
+
+        local request_body = json.encode({
+          filename = filename
+        })
+
+        vim.fn.jobstart({
+          "curl",
+          "-X", "POST",
+          "-s",
+          "--json",
+          request_body,
+          "http://127.0.0.1:8080/filename"
+        })
+      end,
+      pattern = ft_patterns
+    })
+
+    vim.api.nvim_exec_autocmds("BufFilePost", {})
+    vim.api.nvim_exec_autocmds("CursorHold", {})
   end, {})
   vim.api.nvim_create_user_command("MdPreviewStop", function()
     vim.api.nvim_del_autocmd(PREVIEW_AUTOCMD)
+    vim.api.nvim_del_autocmd(PREVIEW_FILEOPEN_AUTOCMD)
     if start_server then
       vim.fn.jobstop(SERVER_PID)
     end
