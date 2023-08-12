@@ -1,4 +1,7 @@
 local json = require "markdown-preview.lib.json"
+local ws_init = require "markdown-preview.util.ws"
+local curl_post = require "markdown-preview.util.curl_post"
+
 
 local PREVIEW_AUTOCMD = -1
 local PREVIEW_FILEOPEN_AUTOCMD = -1
@@ -21,6 +24,7 @@ local function setup(opts)
   end
 
   vim.api.nvim_create_user_command("MdPreview", function()
+    local ws = ws_init("ws://127.0.0.1:8081/editor")
     if start_server then
       print "Starting server..."
       SERVER_PID = vim.fn.jobstart({
@@ -43,23 +47,9 @@ local function setup(opts)
         local current_buf = vim.api.nvim_get_current_buf()
         local buf_lines = vim.api.nvim_buf_line_count(current_buf)
 
-        local request_body = json.encode({
+        curl_post("http://127.0.0.1:8080/document", {
           text = table.concat(vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, buf_lines, false), '\n')
         })
-
-        vim.fn.jobstart(
-          {
-            "curl",
-            "-X", "POST",
-            "-s",
-            "--json",
-            request_body,
-            "http://127.0.0.1:8080/document"
-          }, {
-            on_stderr = function(_, data)
-              print("E: " .. json.encode(data))
-            end
-          })
       end,
       pattern = ft_patterns
     })
@@ -72,13 +62,8 @@ local function setup(opts)
           filename = filename
         })
 
-        vim.fn.jobstart({
-          "curl",
-          "-X", "POST",
-          "-s",
-          "--json",
-          request_body,
-          "http://127.0.0.1:8080/filename"
+        curl_post("http://127.0.0.1:8080/filename", {
+          filename = filename
         })
       end,
       pattern = ft_patterns
