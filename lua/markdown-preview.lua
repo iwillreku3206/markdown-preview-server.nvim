@@ -53,6 +53,7 @@ local function setup(opts)
       end,
       pattern = ft_patterns
     })
+    vim.api.nvim_exec_autocmds("CursorHold")
     PREVIEW_FILEOPEN_AUTOCMD = vim.api.nvim_create_autocmd({ "BufFilePost", "BufEnter" }, {
       callback = function()
         local current_buf = vim.api.nvim_get_current_buf()
@@ -62,12 +63,11 @@ local function setup(opts)
           filename = filename
         })
 
-        curl_post("http://127.0.0.1:8080/filename", {
-          filename = filename
-        })
+        curl_post("http://127.0.0.1:8080/filename", request_body)
       end,
       pattern = ft_patterns
     })
+    vim.api.nvim_exec_autocmds("BufFilePost")
 
     vim.api.nvim_exec_autocmds("BufFilePost", {})
     vim.api.nvim_exec_autocmds("CursorHold", {})
