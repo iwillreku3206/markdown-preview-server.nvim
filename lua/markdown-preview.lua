@@ -42,19 +42,19 @@ local function setup(opts)
       })
       print("Server started with PID " .. SERVER_PID)
     end
-    PREVIEW_AUTOCMD = vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI", "CursorMoved", "CursorMovedI" }, {
-      callback = function()
-        local current_buf = vim.api.nvim_get_current_buf()
-        local buf_lines = vim.api.nvim_buf_line_count(current_buf)
+    PREVIEW_AUTOCMD = vim.api.nvim_create_autocmd(
+      { "CursorHold", "CursorHoldI", "CursorMoved", "CursorMovedI", "BufFilePost", "BufEnter", "BufWinEnter" }, {
+        callback = function()
+          local current_buf = vim.api.nvim_get_current_buf()
+          local buf_lines = vim.api.nvim_buf_line_count(current_buf)
 
-        curl_post("http://127.0.0.1:8080/document", {
-          text = table.concat(vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, buf_lines, false), '\n')
-        })
-      end,
-      pattern = ft_patterns
-    })
-    vim.api.nvim_exec_autocmds("CursorHold")
-    PREVIEW_FILEOPEN_AUTOCMD = vim.api.nvim_create_autocmd({ "BufFilePost", "BufEnter" }, {
+          curl_post("http://127.0.0.1:8080/document", {
+            text = table.concat(vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, buf_lines, false), '\n')
+          })
+        end,
+        pattern = ft_patterns
+      })
+    PREVIEW_FILEOPEN_AUTOCMD = vim.api.nvim_create_autocmd({ "BufFilePost", "BufEnter", "BufWinEnter" }, {
       callback = function()
         local current_buf = vim.api.nvim_get_current_buf()
         local filename = vim.api.nvim_buf_get_name(current_buf)
@@ -67,7 +67,6 @@ local function setup(opts)
       end,
       pattern = ft_patterns
     })
-    vim.api.nvim_exec_autocmds("BufFilePost")
 
     vim.api.nvim_exec_autocmds("BufFilePost", {})
     vim.api.nvim_exec_autocmds("CursorHold", {})
