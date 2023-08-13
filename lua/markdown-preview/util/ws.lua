@@ -34,8 +34,14 @@ return function(uri)
     },
     {
       on_stdout = function(_, data, stream)
-
+        local ok, msg = pcall(json.decode, data[1])
+        if not ok then return end
+        if msg.type == nil or msg.content == nil then return end
+        if msg.type == "GotoPath" then
+          print("opening " .. msg.content)
+          vim.cmd("e " .. msg.content)
+        end
       end,
-          }
+    }
   )
 end
