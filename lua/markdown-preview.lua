@@ -2,10 +2,11 @@ local json = require "markdown-preview.lib.json"
 local ws_init = require "markdown-preview.util.ws"
 local curl_post = require "markdown-preview.util.curl_post"
 
-
 local PREVIEW_AUTOCMD = -1
 local PREVIEW_FILEOPEN_AUTOCMD = -1
 local SERVER_PID = -1
+local EDITOR_ID = -1
+local REQ_NUMBER = -1
 
 local function setup(opts)
   local start_server = opts.start_server or true
@@ -24,7 +25,12 @@ local function setup(opts)
   end
 
   vim.api.nvim_create_user_command("MdPreview", function()
-    local ws = ws_init("ws://127.0.0.1:8081/editor")
+    ws_init("ws://127.0.0.1:8081/editor", {
+      on_editor_id = function(msg)
+        EDITOR_ID = msg.content
+        print(EDITOR_ID)
+      end
+    })
     if start_server then
       print "Starting server..."
       SERVER_PID = vim.fn.jobstart({
@@ -48,9 +54,13 @@ local function setup(opts)
           local current_buf = vim.api.nvim_get_current_buf()
           local buf_lines = vim.api.nvim_buf_line_count(current_buf)
 
-          curl_post("http://127.0.0.1:8080/document", {
-            text = table.concat(vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, buf_lines, false), '\n')
+          curl_post("http://127.0.0.1:" .. server_info.port .. "/document", {
+            text = table.concat(vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, buf_lines, false), '\n'),
+            request_number = REQ_NUMBER,
+            editor_id = EDITOR_ID
           })
+
+          REQ_NUMBER = REQ_NUMBER + 1
         end,
         pattern = ft_patterns
       })
@@ -63,7 +73,7 @@ local function setup(opts)
           filename = filename
         })
 
-        curl_post("http://127.0.0.1:8080/filename", request_body)
+        curl_post("http://127.0.0.1:" .. server_info.port .. "/filename", request_body)
       end,
       pattern = ft_patterns
     })
