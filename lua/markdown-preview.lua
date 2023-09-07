@@ -12,6 +12,8 @@ local function setup(opts)
   local start_server = opts.start_server or true
   local server_info = opts.server_info or {
     bin = "markdown-preview-server",
+    port = 8080,
+    ws_port = 8081,
     config = "~/.config/markdown-preview-server/config.toml"
   }
   local ft = opts.ft or { "md" }
@@ -34,7 +36,7 @@ local function setup(opts)
       print "Starting server..."
       SERVER_PID = vim.fn.jobstart({
         server_info.bin,
-        "--config", server_info.config,
+        "--config-path", server_info.config,
       }, {
         on_exit = function(_, code, _)
           print("Server exited with code " .. code)
