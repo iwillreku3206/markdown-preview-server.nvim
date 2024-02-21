@@ -1,4 +1,16 @@
 --- @class Connection
+--- @field binary string
+--- @field config string
+--- @field ft string[]
+--- @field open_browser boolean
+--- @field browser ViewerInfo?
+--- @field file_change_autocmd number?
+--- @field path_change_autocmd number?
+--- @field terminate_autocmd number?
+--- @field process uv_process_t?
+--- @field stdin uv_pipe_t?
+--- @field stdout uv_pipe_t?
+--- @field stderr uv_pipe_t?
 local Connection = {
   --- @type string
   binary = "markdown-preview-server",
@@ -16,6 +28,8 @@ local Connection = {
   file_change_autocmd = nil,
   --- @type number
   path_change_autocmd = nil,
+  --- @type number
+  terminate_autocmd = nil,
   --- @type uv_process_t
   process = nil,
   --- @type uv_pipe_t
